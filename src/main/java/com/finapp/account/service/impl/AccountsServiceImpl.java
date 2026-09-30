@@ -7,6 +7,7 @@ import com.finapp.account.dto.CustomerDto;
 import com.finapp.account.entity.Account;
 import com.finapp.account.entity.Customer;
 import com.finapp.account.exception.CustomerAlreadyExistsException;
+import com.finapp.account.exception.ResourceNotFoundException;
 import com.finapp.account.mapper.AccountsMapper;
 import com.finapp.account.mapper.CustomerMapper;
 import com.finapp.account.repository.AccountsRepository;
@@ -37,6 +38,10 @@ public class AccountsServiceImpl  implements IAccountsService {
     public void createAccount(CustomerDto customerDto) {
         Customer customer = CustomerMapper.mapToCustomer(customerDto, new Customer());
         Account account = AccountsMapper.mapToAccount(customerDto.getAccountsDto(), new Account());
+        Customer dbCustomer = customerRepository.findByMobileNumber(customerDto.getMobileNumber());
+        if(dbCustomer != null) {
+            throw new CustomerAlreadyExistsException("Customer already registered with given mobileNumber "+customerDto.getMobileNumber());
+        }
         Customer savedCustomer = customerRepository.save(customer);
         account.setCustomerId(savedCustomer.getCustomerId());
         Account newAccount = generateAccountId(account);
@@ -60,7 +65,14 @@ public class AccountsServiceImpl  implements IAccountsService {
     @Override
     public CustomerDto fetchAccount(String mobileNumber) {
         Customer customer = customerRepository.findByMobileNumber(mobileNumber);
+        if(customer == null){
+            throw new ResourceNotFoundException("Customer", "mobileNumber", mobileNumber);
+        }
         Account account = accountsRepository.findByCustomerId(customer.getCustomerId());
+        if(account == null){
+           //throw new ResourceNotFoundException("Account", "customerId", customer.getCustomerId().toString());
+            throw new ResourceNotFoundException("Account not found for customer: "+customer.getCustomerId());
+        }
 
         CustomerDto customerDto = new CustomerDto();
         customerDto.setName(customer.getName());
@@ -86,7 +98,10 @@ public class AccountsServiceImpl  implements IAccountsService {
         AccountsDto accountDto = customerDto.getAccountsDto();
         if(accountDto !=null ){
             Account account = accountsRepository.findByAccountNumber(accountDto.getAccountNumber());
-            if(account !=null) {
+            if(account == null) {
+                throw new ResourceNotFoundException("Account", "AccountNumber", accountDto.getAccountNumber().toString());
+            }
+            else {
                 account.setAccountNumber(accountDto.getAccountNumber());
                 account.setAccountType(accountDto.getAccountType());
                 account.setBranchAddress(accountDto.getBranchAddress());
@@ -94,7 +109,10 @@ public class AccountsServiceImpl  implements IAccountsService {
 
                 Long customerId = account.getCustomerId();
                 Customer customer = customerRepository.findByCustomerId(customerId);
-                if(customer != null) {
+                if(customer == null){
+                    throw new ResourceNotFoundException("Customer", "CustomerID", customerId.toString());
+                }
+                else {
                     customer.setName(customerDto.getName());
                     customer.setEmail(customerDto.getEmail());
                     customer.setMobileNumber(customerDto.getMobileNumber());
@@ -113,17 +131,17 @@ public class AccountsServiceImpl  implements IAccountsService {
     @Override
     public boolean deleteAccount(String mobileNumber) {
         Customer customer = customerRepository.findByMobileNumber(mobileNumber);
-        if(customer !=null){
+        if(customer == null){
+            throw new ResourceNotFoundException("Customer", "mobileNumber", mobileNumber);
+        }
+        else{
             Account account = accountsRepository.findByCustomerId(customer.getCustomerId());
-            //Optional
-        //  accountsRepository.deleteByCustomerId(customer.getCustomerId());
-        //  customerRepository.deleteById(customer.getCustomerId());
             customerRepository.delete(customer);
             accountsRepository.delete(account);
             return true;
 
         }
-        return false;
+        //return false;
     }
 
 
