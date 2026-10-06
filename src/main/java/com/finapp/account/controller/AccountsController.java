@@ -5,6 +5,8 @@ import com.finapp.account.constants.AccountsConstants;
 import com.finapp.account.dto.CustomerDto;
 import com.finapp.account.dto.ResponseDto;
 import com.finapp.account.service.impl.AccountsServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
@@ -19,11 +21,19 @@ import com.finapp.account.service.IAccountsService;
 
 @RestController
 @Validated
+@Tag(
+        name = "CRUD REST APIs for Accounts in FinApp",
+        description = "CRUD REST APIs in FinApp to CREATE, UPDATE, FETCH AND DELETE account details"
+)
 public class AccountsController {
 
     @Autowired
     private AccountsServiceImpl accountsService;
 
+    @Operation(
+            summary = "Create Account REST API",
+            description = "REST API to create new Customer &  Account inside FinApp"
+    )
     @PostMapping("/api/create")
     public ResponseEntity<ResponseDto> createAccount(@Valid @RequestBody CustomerDto customerDto) {
         accountsService.createAccount(customerDto);
@@ -32,6 +42,10 @@ public class AccountsController {
                 .body(new ResponseDto(AccountsConstants.MESSAGE_201));
     }
 
+    @Operation(
+            summary = "Fetch Account Details REST API",
+            description = "REST API to fetch Customer &  Account details based on a mobile number"
+    )
     @GetMapping("/api/fetch")
     public ResponseEntity<CustomerDto> fetchAccountDetails(@Valid @RequestParam
                                                                @Pattern(regexp = "(^$|[0-9]{11})", message = "Mobile number must be 11 digits") String mobileNumber) {
@@ -39,6 +53,10 @@ public class AccountsController {
         return ResponseEntity.status(HttpStatus.FOUND).body(customerDto);
     }
 
+    @Operation(
+            summary = "Update Account Details REST API",
+            description = "REST API to update Customer &  Account details based on a account number"
+    )
     @PutMapping("/api/update")
     public ResponseEntity<ResponseDto> updateAccountDetails(@Valid @RequestBody CustomerDto customerDto) {
         boolean isUpdated = accountsService.updateAccount(customerDto);
@@ -53,6 +71,10 @@ public class AccountsController {
         }
     }
 
+    @Operation(
+            summary = "Delete Account & Customer Details REST API",
+            description = "REST API to delete Customer &  Account details based on a mobile number"
+    )
     @DeleteMapping("/api/delete")
     public ResponseEntity<ResponseDto> deleteAccountDetails(@Valid @RequestParam
                                                                 @Pattern(regexp = "(^$|[0-9]{11})", message = "Mobile number must be 11 digits") String mobileNumber) {

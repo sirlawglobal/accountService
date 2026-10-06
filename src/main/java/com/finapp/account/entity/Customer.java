@@ -16,9 +16,10 @@ public class Customer extends  BaseEntity{
 
     private String name;
 
+    @Column(unique = true)
     private String email;
 
-    @Column(name="mobile_number")
+    @Column(unique = true, name="mobile_number")
     private String mobileNumber;
 
 
